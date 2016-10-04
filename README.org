@@ -1,0 +1,57 @@
+** cross-scaffolding
+
+Super-scaffolding of draft genome assemblies lacking mate-pair data with
+in-silico mate-pair libraries derived from (closely) related references.
+
+**** Install
+#+BEGIN_SRC
+git clone https://github.com/thackl/cross-scaffolding.git
+#+END_SRC
+
+**** Dependencies
+- bwa, seqtk, samtools, bcftools
+- seq-scripts
+
+To use your preinstalled version, just put them into your =PATH=. To quickly
+install dependencies not present in =PATH= run =make dependencies=. This will
+download and install missing software into =cross-scaffolding/util/=
+
+**** Sample
+Run cross-mate on a small sample data set of to different yeast
+strains. Required data is downloaded automatically. Requires =curl=, =gzip= and
+=sratoolkit= in =PATH=. Running the script takes about 10 minutes on 4 cores
+after the download has finished.
+
+#+BEGIN_SRC
+make sample-yeast
+#+END_SRC
+
+**** Usage
+Generate /in-silico/ mate pairs given a single-/paired-end library of the target
+organism and a reference assembly of a close relative. This is a convenience
+wrapper script that runs all steps of the pipeline (mapping, consensus and
+mate-pair generation).
+
+#+BEGIN_SRC
+cross-mates REF.fa TARGET-READS.fq [TARGET-READS_2.fq]
+#+END_SRC
+
+Creates different mate-pair libraries with insert-sizes ranging from 500 bp to
+200,000 kbp. Use them together with TARGET-READS to de-novo assemble your
+organism at hand, or to further scaffold a previously generated assembly.
+
+For power use and tailoring of the pipeline steps to computing infrastructure,
+i.e. HPC cluster etc, run the different steps of the procedure independently.
+
+#+BEGIN_SRC
+bwa
+samtools
+bcftools, vcfutils
+seq-frag
+#+END_SRC
+
+
+**** Contact
+
+Any kind of feedback is highly appreciated. Feel free to either report [[https://github.com/thackl/minidot/issues/new][issues]]
+directly via github or shoot me an email.
