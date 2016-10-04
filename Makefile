@@ -57,6 +57,9 @@ CLIB324=$(YEAST)/CLIB324.fq
 # requires curl
 # requires sratoolkit fastq-dump https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software
 
+sample-yeast: sample-yeast-get
+	cd samples/yeast && ../../bin/cross-mates -t 4 -i 1000,2000,5000,10000 S228c.fa CLIB324.fq
+
 sample-yeast-get: $(YEAST) $(S228c) $(CLIB324)
 
 $(YEAST):
