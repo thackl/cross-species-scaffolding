@@ -3,6 +3,10 @@
 # Author: Thomas Hackl - thackl@lim4.de
 # Author: Jose Grau - Jose.Grau@mfn-berlin.de
 
+# TODO: -l, -c
+# TODO: mp/pe
+# TODO: support multiple target libs
+
 usage(){
 cat <<EOF
 Usage:
@@ -72,7 +76,6 @@ PRE=${PRE%_?};
 # leaves reads in $@
 
 # check binaries
-# TODO: add util to PATH in this script
 PATH=$UDIR/bwa:$UDIR/samtools/bin:$UDIR/bcftools:$UDIR/seq-scripts/bin:$UDIR/seqtk:$PATH;
 for bin in bwa samtools bcftools vcfutils.pl seq-frag interleaved-split; do
     check_bin $bin;
@@ -81,15 +84,14 @@ done;
 mkdir -p $OUT;
 BAM=$OUT/$PRE.bam
 CNS=$OUT/target-cns.fq
-# # TODO: multiple read libs
-# bwa index $REF;
-# bwa mem -t $THREADS $REF $@ | samtools view -bS - | samtools sort -@ $THREADS -o $BAM
-# samtools index $BAM
-# samtools mpileup -uf $REF $BAM | bcftools call -c | vcfutils.pl vcf2fq | seqtk seq -l0 >$CNS
-# IFS=',';
-# for i in $INSERTS; do
-#     log Insert size: $i;
-#     seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 1>$OUT/$PRE-$i"_1.fq" 2>$OUT/$PRE-$i"_2.fq"
-# done
-# unset IFS;
+bwa index $REF;
+bwa mem -t $THREADS $REF $@ | samtools view -bS - | samtools sort -@ $THREADS -o $BAM
+samtools index $BAM
+samtools mpileup -uf $REF $BAM | bcftools call -c | vcfutils.pl vcf2fq | seqtk seq -l0 >$CNS
+IFS=',';
+for i in $INSERTS; do
+    log Insert size: $i;
+    seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 1>$OUT/$PRE-$i"_1.fq" 2>$OUT/$PRE-$i"_2.fq"
+done
+unset IFS;
 
