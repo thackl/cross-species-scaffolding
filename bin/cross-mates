@@ -89,9 +89,14 @@ bwa mem -t $THREADS $REF $@ | samtools view -bS - | samtools sort -@ $THREADS -o
 samtools index $BAM
 samtools mpileup -uf $REF $BAM | bcftools call -c | vcfutils.pl vcf2fq | seqtk seq -l0 >$CNS
 IFS=',';
-for i in $INSERTS; do
-    log Insert size: $i;
-    seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 1>$OUT/$PRE-$i"_1.fq" 2>$OUT/$PRE-$i"_2.fq"
-done
+
+#{seq-frag mp -p -s -i 10000 -l 100 -c 10 <CLIB324/target-cns.fq | interleaved-split 2>&3 | cat - >1.fq; } 3>&1 1>&2 | cat - >2.fq
+#seq-frag mp -p -s -i 10000 -l 100 -c 10 <CLIB324/target-cns.fq | interleaved-split >1.fq >2.fq
+
+(for i in $INSERTS; do
+     log Insert size: $i;
+     echo "'""seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 1>$OUT/$PRE-$i""_1.fq"" 2>$OUT/$PRE-$i""_2.fq""'"
+done;) | xargs -L 1 -P $THREADS -t bash -c
+
 unset IFS;
 
