@@ -96,9 +96,11 @@ samtools index $BAM
 samtools mpileup -uf $REF $BAM | bcftools call -c | vcfutils.pl vcf2fq | seqtk seq -l0 >$CNS
 IFS=',';
 
-#{seq-frag mp -p -s -i 10000 -l 100 -c 10 <CLIB324/target-cns.fq | interleaved-split 2>&3 | cat - >1.fq; } 3>&1 1>&2 | cat - >2.fq
-#seq-frag mp -p -s -i 10000 -l 100 -c 10 <CLIB324/target-cns.fq | interleaved-split >1.fq >2.fq
 
+# Scan N gaps
+seqtk cutN -g -n 100 $CNS | perl -ane 'BEGIN{%G}; $G{int((($F[2]-$F[1])/100)+.5)}++; END{print $_,"00+-50\t",$G{$_},"\n" for sort{$a<=>$b}(keys %G)}'
+
+IFS=',';
 (for i in $INSERTS; do
      if [ $GZIP -gt 0 ]; then
          echo "'""{ seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$i""_2.fq.gz""'"
