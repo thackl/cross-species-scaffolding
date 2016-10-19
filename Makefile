@@ -1,6 +1,6 @@
 PATH := bin:util/bwa:util/samtools/bin:util/bcftools/bin:util/seq-scripts/bin:util/seqtk:$(PATH)
 
-.PHONY: all clean samples
+.PHONY: all clean sample-yeast dependencies
 
 all:
 	@echo "cross-mates itself doesn't require building. Use"
@@ -57,8 +57,15 @@ CLIB324=$(YEAST)/CLIB324.fq
 # requires curl
 # requires sratoolkit fastq-dump https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software
 
-sample-yeast: sample-yeast-get
+sample-yeast: sample-dependencies sample-yeast-get
 	cd samples/yeast && ../../bin/cross-mates -t 4 -i 1000,2000,5000,10000 S228c.fa CLIB324.fq
+	@echo "\nGenerated the following libraries:"
+	find `pwd`/samples/yeast/ -name "*_[12].fq" | sort -V
+
+sample-dependencies:
+	hash bwa || { echo "bwa required in PATH" 1>&2 && exit 1; }
+	hash curl || { echo "curl required in PATH" 1>&2 && exit 1; }
+	hash fastq-dump || { echo "fastq-dump required in PATH" && exit 1; }
 
 sample-yeast-get: $(YEAST) $(S228c) $(CLIB324)
 
