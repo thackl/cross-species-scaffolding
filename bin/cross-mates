@@ -91,7 +91,7 @@ mkdir -p $OUT;
 BAM=$OUT/$PRE.bam
 CNS=$OUT/target-cns.fq
 bwa index $REF;
-bwa mem -t $THREADS $REF $@ | samtools view -bS - | samtools sort -@ $THREADS -o $BAM
+bwa mem -t $THREADS $REF <(cat $@) | samtools view -bS - | samtools sort -@ $THREADS -o $BAM
 samtools index $BAM
 samtools mpileup -uf $REF $BAM | bcftools call -c | vcfutils.pl vcf2fq | seqtk seq -l0 >$CNS
 IFS=',';

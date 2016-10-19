@@ -3,12 +3,16 @@
 Super-scaffolding of draft genome assemblies lacking mate-pair data with
 in-silico mate-pair libraries derived from (closely) related references.
 
-**** Install
+**** Install / Dependencies
 #+BEGIN_SRC
 git clone https://github.com/thackl/cross-scaffolding.git
+
+# install dependencies not on PATH to cross-scaffolding/util/
+cd cross-scaffolding
+make dependencies
 #+END_SRC
 
-**** Dependencies
+Depends on:
 - bwa, seqtk, samtools, bcftools
 - seq-scripts
 
@@ -18,8 +22,12 @@ download and install missing software into =cross-scaffolding/util/=
 
 **** Sample
 Run cross-mate on a small sample data set of to different yeast
-strains. Required data is downloaded automatically. Requires =curl=, =gzip= and
-=sratoolkit= in =PATH=. Running the script takes about 10 minutes on 4 cores
+strains. Data is downloaded automatically. Requires
+
+- curl, gzip
+- sratoolkit (https://github.com/ncbi/sra-tools/wiki/Downloads)
+
+in =PATH=. Running the script takes about 10 minutes on 4 cores
 after the download has finished.
 
 #+BEGIN_SRC
@@ -27,13 +35,13 @@ make sample-yeast
 #+END_SRC
 
 **** Usage
-Generate /in-silico/ mate pairs given a single-/paired-end library of the target
+Generate /in-silico/ mate pairs given single-/paired-end libraries of the target
 organism and a reference assembly of a close relative. This is a convenience
 wrapper script that runs all steps of the pipeline (mapping, consensus and
 mate-pair generation).
 
 #+BEGIN_SRC
-cross-mates REF.fa TARGET-READS.fq [TARGET-READS_2.fq]
+cross-mates REF.fa TARGET-LIB1_1.fq [TARGET-LIB1_2.fq TARGET-LIB2_1.fq ...]
 #+END_SRC
 
 Creates different mate-pair libraries with insert-sizes ranging from 500 bp to
@@ -41,15 +49,9 @@ Creates different mate-pair libraries with insert-sizes ranging from 500 bp to
 organism at hand, or to further scaffold a previously generated assembly.
 
 For power use and tailoring of the pipeline steps to computing infrastructure,
-i.e. HPC cluster etc, run the different steps of the procedure independently.
-
-#+BEGIN_SRC
-bwa
-samtools
-bcftools, vcfutils
-seq-frag
-#+END_SRC
-
+i.e. HPC cluster etc, run the different steps of the procedure
+independently. Have a look at the source code of the cross-mates script for some
+guidance.
 
 **** Contact
 
