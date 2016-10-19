@@ -14,9 +14,11 @@ Usage:
 
 Generate in-silico mate-pair libraries for super-scaffolding from target genome
 (paired-end) reads and a closely related reference.
-  -o   output directory [./TARGET-READS]
-  -t   threads for bwa/samtools [1]
-  -i   insert sizes, comma-separated [auto]
+  -o   output directory [$OUT]
+  -t   number of threads / parallel processes [$THREADS]
+  -i   insert sizes [$INSERTS]
+  -l   read length [$LENGTH]
+  -c   coverage of mate-pair libraries [$COVERAGE]
   -z   gzip
 EOF
 exit 0; }
@@ -51,15 +53,19 @@ ARGS=`getopt -n "$SCR" -o "t:i:zh" -- "$@"`
 eval set -- "$ARGS"
 
 INSERTS="500,1000,1500,2000,5000,10000,20000,50000,100000,200000";
-THREADS=1
-OUT=''
+THREADS=10
+OUT='cross-mates-'`date +%F`
 GZIP=0
+LENGTH=100
+COVERAGE=10
 
 while true; do
     case "$1" in
         -i) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); INSERTS="$2"; shift 2;;
         -t) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); THREADS="$2"; shift 2;;
         -o) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); OUT="$2"; shift 2;;
+        -l) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); LENGTH="$2"; shift 2;;
+        -c) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); COVERAGE="$2"; shift 2;;
         -z) GZIP=1; shift 1;;
         -h) usage && exit 0;;
         --) shift; break;;
@@ -103,9 +109,9 @@ seqtk cutN -g -n 100 $CNS | perl -ane 'BEGIN{%G}; $G{int((($F[2]-$F[1])/100)+.5)
 IFS=',';
 (for i in $INSERTS; do
      if [ $GZIP -gt 0 ]; then
-         echo "'""{ seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$i""_2.fq.gz""'"
+         echo "'""{ seq-frag mp -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$i""_2.fq.gz""'"
      else
-         echo "'""seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 1>$OUT/$PRE-$i""_1.fq"" 2>$OUT/$PRE-$i""_2.fq""'"
+         echo "'""seq-frag mp -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 1>$OUT/$PRE-$i""_1.fq"" 2>$OUT/$PRE-$i""_2.fq""'"
      fi;
 
 done;) | xargs -L 1 -P $THREADS -t bash -c
