@@ -20,7 +20,7 @@ from target genome reads and a closely related reference.
   -l   read length [$LENGTH]
   -c   coverage of mate-pair libraries [$COVERAGE]
   -p   paired-end vs. mate-pair insert size threshold [$MPTHRESH]
-       Inserts < -p will be fw/rev, Inserts >= -p rev/fw.
+       pairs with insert < -p will be fw/rev, pairs >= -p rev/fw
   -z   gzipped output libraries
   -s   write SOAP-denovo config for libraries to log
   -V   show script version
@@ -108,10 +108,9 @@ bwa index $REF;
 bwa mem -t $THREADS $REF <(cat $@) | samtools view -bS - | samtools sort -@ $THREADS -o $BAM
 samtools index $BAM
 samtools mpileup -uf $REF $BAM | bcftools call -c | vcfutils.pl vcf2fq | seqtk seq -l0 >$CNS
-IFS=',';
 
-# Scan N gaps
-seqtk cutN -g -n 100 $CNS | perl -ane 'BEGIN{%G}; $G{int((($F[2]-$F[1])/100)+.5)}++; END{printf "%6d00+-50\t%7d\n",$_,$G{$_} for sort{$a<=>$b}(keys %G)}'
+# TODO: Scan N gaps
+# seqtk cutN -g -n 100 $CNS | perl -ane 'BEGIN{%G}; $G{int((($F[2]-$F[1])/100)+.5)}++; END{printf "%6d00+-50\t%7d\n",$_,$G{$_} for sort{$a<=>$b}(keys %G)}'
 
 IFS=',';
 (for i in $INSERTS; do
@@ -122,7 +121,6 @@ IFS=',';
          echo "'""seq-frag $MODE -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 1>$OUT/$PRE-$MODE-$i""_1.fq"" 2>$OUT/$PRE-$MODE-$i""_2.fq""'"
      fi;
 done;) | xargs -L 1 -P $THREADS -t bash -c
-
 unset IFS;
 
 log "Generated the following libraries:"
