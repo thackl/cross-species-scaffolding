@@ -3,21 +3,28 @@
 # Author: Thomas Hackl - thackl@lim4.de
 # Author: Jose Grau - Jose.Grau@mfn-berlin.de
 
-# TODO: -l, -c
-# TODO: mp/pe
-# TODO: support multiple target libs
+# TODO: NNN-gaps
+
+VERSION=1.0.0
 
 usage(){
 cat <<EOF
 Usage:
   cross-mates REF.fa TARGET-READS_1.fq [TARGET-READS_2.fq]
 
-Generate in-silico mate-pair libraries for super-scaffolding from target genome
-(paired-end) reads and a closely related reference.
-  -o   output directory [./TARGET-READS]
-  -t   threads for bwa/samtools [1]
-  -i   insert sizes, comma-separated [auto]
-  -z   gzip
+Generate in-silico mate-pair (and paired-end) libraries for super-scaffolding
+from target genome reads and a closely related reference.
+  -o   output directory [$OUT]
+  -t   number of threads / parallel processes [$THREADS]
+  -i   insert sizes [$INSERTS]
+  -l   read length [$LENGTH]
+  -c   coverage of mate-pair libraries [$COVERAGE]
+  -p   paired-end vs. mate-pair insert size threshold [$MPTHRESH]
+       pairs with insert < -p will be fw/rev, pairs >= -p rev/fw
+  -z   gzipped output libraries
+  -s   write SOAP-denovo config for libraries to log
+  -V   show script version
+  -h   show this help
 EOF
 exit 0; }
 
@@ -46,22 +53,31 @@ check_bin(){
 }
 
 # Execute getopt and check opts/args
-ARGS=`getopt -n "$SCR" -o "t:i:zh" -- "$@"`
+ARGS=`getopt -n "$SCR" -o "t:i:o:l:c:p:szhV" -- "$@"`
 [ $? -ne 0 ] && exit 1; # Bad arguments
 eval set -- "$ARGS"
 
 INSERTS="500,1000,1500,2000,5000,10000,20000,50000,100000,200000";
-THREADS=1
-OUT=''
+THREADS=10
+OUT='cross-mates-'`date +%F`
 GZIP=0
+SOAP=0
+LENGTH=100
+COVERAGE=10
+MPTHRESH=1000
+MODE="mp"
 
 while true; do
     case "$1" in
         -i) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); INSERTS="$2"; shift 2;;
         -t) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); THREADS="$2"; shift 2;;
         -o) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); OUT="$2"; shift 2;;
+        -l) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); LENGTH="$2"; shift 2;;
+        -c) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); COVERAGE="$2"; shift 2;;
         -z) GZIP=1; shift 1;;
+        -s) SOAP=1; shift 1;;
         -h) usage && exit 0;;
+        -V) echo $VERSION && exit 0;;
         --) shift; break;;
     esac
 done;
@@ -69,14 +85,11 @@ done;
 # between 2 and 3 args (REF, READS, READS_2)
 [ $# -lt 2 -o $# -gt 3 ] && usage;
 
-REF=$1; shift;
+REF=$1; shift; # leaves reads in $@
 REFP=$( basename ${REF%.*} );
 
 PRE=$( basename ${1%.*} );
 PRE=${PRE%_?};
-
-[ ! -n "$OUT" ] && { OUT=$PRE; };
-# leaves reads in $@
 
 # check binaries
 PATH=$UDIR/bwa:$UDIR/samtools/bin:$UDIR/bcftools:$UDIR/seq-scripts/bin:$UDIR/seqtk:$PATH;
@@ -90,24 +103,53 @@ done;
 mkdir -p $OUT;
 BAM=$OUT/$PRE.bam
 CNS=$OUT/target-cns.fq
+
 bwa index $REF;
 bwa mem -t $THREADS $REF <(cat $@) | samtools view -bS - | samtools sort -@ $THREADS -o $BAM
 samtools index $BAM
 samtools mpileup -uf $REF $BAM | bcftools call -c | vcfutils.pl vcf2fq | seqtk seq -l0 >$CNS
-IFS=',';
 
-
-# Scan N gaps
-seqtk cutN -g -n 100 $CNS | perl -ane 'BEGIN{%G}; $G{int((($F[2]-$F[1])/100)+.5)}++; END{print $_,"00+-50\t",$G{$_},"\n" for sort{$a<=>$b}(keys %G)}'
+# TODO: Scan N gaps
+# seqtk cutN -g -n 100 $CNS | perl -ane 'BEGIN{%G}; $G{int((($F[2]-$F[1])/100)+.5)}++; END{printf "%6d00+-50\t%7d\n",$_,$G{$_} for sort{$a<=>$b}(keys %G)}'
 
 IFS=',';
 (for i in $INSERTS; do
+     [ $i -lt $MPTHRESH ] && MODE=pe || MODE=mp;
      if [ $GZIP -gt 0 ]; then
-         echo "'""{ seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$i""_2.fq.gz""'"
+         echo "'""{ seq-frag $MODE -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$MODE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$MODE-$i""_2.fq.gz""'"
      else
-         echo "'""seq-frag mp -p -s -i $i -l 100 -c 10 <$CNS | interleaved-split 1>$OUT/$PRE-$i""_1.fq"" 2>$OUT/$PRE-$i""_2.fq""'"
+         echo "'""seq-frag $MODE -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 1>$OUT/$PRE-$MODE-$i""_1.fq"" 2>$OUT/$PRE-$MODE-$i""_2.fq""'"
      fi;
-
 done;) | xargs -L 1 -P $THREADS -t bash -c
-
 unset IFS;
+
+log "Generated the following libraries:"
+find `pwd`/"$OUT" -name "*_[12].fq*" | sort -V >&2
+
+LIBC=3;
+if [ $SOAP -gt 0 ]; then
+
+    log "Possible SOAP-denovo config for libraries:"
+    [ $GZIP -gt 0 ] && SUF=.fq.gz || SUF=.fq;
+
+    IFS=',';
+    for i in $INSERTS; do
+        LIBC=$(( $LIBC + 1 ));
+
+        [ $i -lt $MPTHRESH ] && MODE=pe || MODE=mp;
+        [ $i -lt $MPTHRESH ] && REV=0 || REV=1;
+        R1="$OUT"/"$PRE-$MODE-$i""_1""$SUF";
+        R2="$OUT"/"$PRE-$MODE-$i""_1""$SUF";
+
+        echo [LIB]
+	echo avg_ins=$i
+	echo reverse_seq=$REV
+	echo asm_flags=2
+	echo rank=$LIBC
+	echo q1="$R1"
+	echo q2="$R2"
+
+    done;
+    unset IFS;
+
+fi;
