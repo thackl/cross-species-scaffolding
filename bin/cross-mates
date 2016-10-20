@@ -3,9 +3,9 @@
 # Author: Thomas Hackl - thackl@lim4.de
 # Author: Jose Grau - Jose.Grau@mfn-berlin.de
 
-# TODO: -l, -c
-# TODO: mp/pe
-# TODO: support multiple target libs
+# TODO: soap config
+# TODO: version
+# TODO: NNN-gaps
 
 usage(){
 cat <<EOF
@@ -19,7 +19,9 @@ Generate in-silico mate-pair libraries for super-scaffolding from target genome
   -i   insert sizes [$INSERTS]
   -l   read length [$LENGTH]
   -c   coverage of mate-pair libraries [$COVERAGE]
-  -z   gzip
+  -p   paired-end vs. mate-pair insert size threshold [$MPTHRESH]
+       Inserts < -p will be fw/rev, Inserts >= -p rev/fw.
+  -z   gzipped output libraries
 EOF
 exit 0; }
 
@@ -48,7 +50,7 @@ check_bin(){
 }
 
 # Execute getopt and check opts/args
-ARGS=`getopt -n "$SCR" -o "t:i:zh" -- "$@"`
+ARGS=`getopt -n "$SCR" -o "t:i:o:l:c:p:zh" -- "$@"`
 [ $? -ne 0 ] && exit 1; # Bad arguments
 eval set -- "$ARGS"
 
@@ -58,6 +60,8 @@ OUT='cross-mates-'`date +%F`
 GZIP=0
 LENGTH=100
 COVERAGE=10
+MPTHRESH=1000
+MODE="mp"
 
 while true; do
     case "$1" in
@@ -96,24 +100,24 @@ done;
 mkdir -p $OUT;
 BAM=$OUT/$PRE.bam
 CNS=$OUT/target-cns.fq
+
 bwa index $REF;
 bwa mem -t $THREADS $REF <(cat $@) | samtools view -bS - | samtools sort -@ $THREADS -o $BAM
 samtools index $BAM
 samtools mpileup -uf $REF $BAM | bcftools call -c | vcfutils.pl vcf2fq | seqtk seq -l0 >$CNS
 IFS=',';
 
-
 # Scan N gaps
-seqtk cutN -g -n 100 $CNS | perl -ane 'BEGIN{%G}; $G{int((($F[2]-$F[1])/100)+.5)}++; END{print $_,"00+-50\t",$G{$_},"\n" for sort{$a<=>$b}(keys %G)}'
+seqtk cutN -g -n 100 $CNS | perl -ane 'BEGIN{%G}; $G{int((($F[2]-$F[1])/100)+.5)}++; END{printf "%6d00+-50\t%7d\n",$_,$G{$_} for sort{$a<=>$b}(keys %G)}'
 
 IFS=',';
 (for i in $INSERTS; do
+     [ $i -lt $MPTHRESH ] && MODE=pe || MODE=mp;
      if [ $GZIP -gt 0 ]; then
-         echo "'""{ seq-frag mp -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$i""_2.fq.gz""'"
+         echo "'""{ seq-frag mp -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$MODE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$MODE-$i""_2.fq.gz""'"
      else
-         echo "'""seq-frag mp -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 1>$OUT/$PRE-$i""_1.fq"" 2>$OUT/$PRE-$i""_2.fq""'"
+         echo "'""seq-frag mp -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 1>$OUT/$PRE-$MODE-$i""_1.fq"" 2>$OUT/$PRE-$MODE-$i""_2.fq""'"
      fi;
-
 done;) | xargs -L 1 -P $THREADS -t bash -c
 
 unset IFS;
