@@ -3,7 +3,6 @@
 # Author: Thomas Hackl - thackl@lim4.de
 # Author: Jose Grau - Jose.Grau@mfn-berlin.de
 
-# TODO: soap config
 # TODO: version
 # TODO: NNN-gaps
 
@@ -22,6 +21,7 @@ from target genome reads and a closely related reference.
   -p   paired-end vs. mate-pair insert size threshold [$MPTHRESH]
        Inserts < -p will be fw/rev, Inserts >= -p rev/fw.
   -z   gzipped output libraries
+  -s   write SOAP-denovo config for libraries to log
 EOF
 exit 0; }
 
@@ -50,7 +50,7 @@ check_bin(){
 }
 
 # Execute getopt and check opts/args
-ARGS=`getopt -n "$SCR" -o "t:i:o:l:c:p:zh" -- "$@"`
+ARGS=`getopt -n "$SCR" -o "t:i:o:l:c:p:szh" -- "$@"`
 [ $? -ne 0 ] && exit 1; # Bad arguments
 eval set -- "$ARGS"
 
@@ -58,6 +58,7 @@ INSERTS="500,1000,1500,2000,5000,10000,20000,50000,100000,200000";
 THREADS=10
 OUT='cross-mates-'`date +%F`
 GZIP=0
+SOAP=0
 LENGTH=100
 COVERAGE=10
 MPTHRESH=1000
@@ -71,6 +72,7 @@ while true; do
         -l) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); LENGTH="$2"; shift 2;;
         -c) [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1); COVERAGE="$2"; shift 2;;
         -z) GZIP=1; shift 1;;
+        -s) SOAP=1; shift 1;;
         -h) usage && exit 0;;
         --) shift; break;;
     esac
@@ -120,4 +122,32 @@ done;) | xargs -L 1 -P $THREADS -t bash -c
 unset IFS;
 
 log "Generated the following libraries:"
-find `pwd`/$OUT -name "*_[12].fq*" | sort -V >&2
+find `pwd`/"$OUT" -name "*_[12].fq*" | sort -V >&2
+
+LIBC=3;
+if [ $SOAP -gt 0 ]; then
+
+    log "Possible SOAP-denovo config for libraries:"
+    [ $GZIP -gt 0 ] && SUF=.fq.gz || SUF=.fq;
+
+    IFS=',';
+    for i in $INSERTS; do
+        LIBC=$(( $LIBC + 1 ));
+
+        [ $i -lt $MPTHRESH ] && MODE=pe || MODE=mp;
+        [ $i -lt $MPTHRESH ] && REV=0 || REV=1;
+        R1="$OUT"/"$PRE-$MODE-$i""_1""$SUF";
+        R2="$OUT"/"$PRE-$MODE-$i""_1""$SUF";
+
+        echo [LIB]
+	echo avg_ins=$i
+	echo reverse_seq=$REV
+	echo asm_flags=2
+	echo rank=$LIBC
+	echo q1="$R1"
+	echo q2="$R2"
+
+    done;
+    unset IFS;
+
+fi;
