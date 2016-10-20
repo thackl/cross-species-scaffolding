@@ -12,8 +12,8 @@ cat <<EOF
 Usage:
   cross-mates REF.fa TARGET-READS_1.fq [TARGET-READS_2.fq]
 
-Generate in-silico mate-pair libraries for super-scaffolding from target genome
-(paired-end) reads and a closely related reference.
+Generate in-silico mate-pair (and paired-end) libraries for super-scaffolding
+from target genome reads and a closely related reference.
   -o   output directory [$OUT]
   -t   number of threads / parallel processes [$THREADS]
   -i   insert sizes [$INSERTS]
@@ -79,14 +79,11 @@ done;
 # between 2 and 3 args (REF, READS, READS_2)
 [ $# -lt 2 -o $# -gt 3 ] && usage;
 
-REF=$1; shift;
+REF=$1; shift; # leaves reads in $@
 REFP=$( basename ${REF%.*} );
 
 PRE=$( basename ${1%.*} );
 PRE=${PRE%_?};
-
-[ ! -n "$OUT" ] && { OUT=$PRE; };
-# leaves reads in $@
 
 # check binaries
 PATH=$UDIR/bwa:$UDIR/samtools/bin:$UDIR/bcftools:$UDIR/seq-scripts/bin:$UDIR/seqtk:$PATH;
@@ -114,10 +111,13 @@ IFS=',';
 (for i in $INSERTS; do
      [ $i -lt $MPTHRESH ] && MODE=pe || MODE=mp;
      if [ $GZIP -gt 0 ]; then
-         echo "'""{ seq-frag mp -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$MODE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$MODE-$i""_2.fq.gz""'"
+         echo "'""{ seq-frag $MODE -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 2>&3 | gzip >$OUT/$PRE-$MODE-$i""_1.fq.gz""; } 3>&1 1>&2 | gzip >$OUT/$PRE-$MODE-$i""_2.fq.gz""'"
      else
-         echo "'""seq-frag mp -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 1>$OUT/$PRE-$MODE-$i""_1.fq"" 2>$OUT/$PRE-$MODE-$i""_2.fq""'"
+         echo "'""seq-frag $MODE -p -s -i $i -l $LENGTH -c $COVERAGE <$CNS | interleaved-split 1>$OUT/$PRE-$MODE-$i""_1.fq"" 2>$OUT/$PRE-$MODE-$i""_2.fq""'"
      fi;
 done;) | xargs -L 1 -P $THREADS -t bash -c
 
 unset IFS;
+
+log "Generated the following libraries:"
+find `pwd`/$OUT -name "*_[12].fq*" | sort -V >&2
