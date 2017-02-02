@@ -11,7 +11,7 @@ clean:
 	-rm -fr util
 	-rm -r samples
 
-dependencies:
+dependencies: lib/Fasta	lib/Fastq
 	hash bwa || $(MAKE) util/bwa
 	hash seqtk || $(MAKE) util/seqtk
 	hash samtools || $(MAKE) util/samtools
@@ -48,6 +48,14 @@ util/seqtk:
 	mkdir -p util
 	cd util && git clone https://github.com/lh3/seqtk.git;
 	cd util/seqtk && make
+
+lib/Fastq:
+	mkdir -p lib
+	cd lib && git clone https://github.com/BioInf-Wuerzburg/perl5lib-Fastq.git Fastq
+
+lib/Fasta:
+	mkdir -p lib
+	cd lib && git clone https://github.com/BioInf-Wuerzburg/perl5lib-Fasta.git Fasta
 
 ## yeast sample
 YEAST=samples/yeast
