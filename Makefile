@@ -66,7 +66,7 @@ CLIB324=$(YEAST)/CLIB324.fq
 # requires sratoolkit fastq-dump https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software
 
 sample-yeast: sample-dependencies sample-yeast-get
-	cd samples/yeast && ../../bin/cross-mates -t 4 -i 500,2000,5000,10000 S228c.fa CLIB324.fq
+	cd samples/yeast && ../../bin/cross-mates -s -t 4 -i 500,2000,5000,10000 S228c.fa CLIB324.fq
 
 sample-dependencies:
 	hash bwa || { echo "bwa required in PATH" 1>&2 && exit 1; }
