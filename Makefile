@@ -79,7 +79,7 @@ $(YEAST):
 	mkdir -p $(YEAST)
 
 $(S228c):
-	curl -# ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna.gz | gunzip > $(S228c)
+	curl -# ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna.gz | gunzip > $(S228c)
 
 $(CLIB324):
 	fastq-dump -A SRR3138752 -Z > $(CLIB324)
