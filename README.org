@@ -10,7 +10,7 @@ newly created read data.
 git clone https://github.com/thackl/cross-species-scaffolding.git
 
 # install dependencies not on PATH to cross-species-scaffolding/util/
-cd cross-scaffolding
+cd cross-species-scaffolding
 make dependencies
 #+END_SRC
 
