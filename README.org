@@ -1,7 +1,9 @@
-** cross-scaffolding
+** Cross-species scaffolding
 
-Super-scaffolding of draft genome assemblies lacking mate-pair data with
-in-silico mate-pair libraries derived from (closely) related references.
+Generate /in silico/ mate-pair reads from single-/paired-end reads of your
+organism of interest, and a closely related reference genome. Afterwards improve
+your draft genome by using the scaffolding software of your choice with the
+newly created read data.
 
 **** Install / Dependencies
 #+BEGIN_SRC
@@ -35,17 +37,17 @@ make sample-yeast
 #+END_SRC
 
 **** Usage
-Generate /in-silico/ mate pairs given single-/paired-end libraries of the target
-organism and a reference assembly of a close relative. This is a convenience
-wrapper script that runs all steps of the pipeline (mapping, consensus and
-mate-pair generation).
+Generate /in silico/ mate-pairs from single-/paired-end libraries of the target
+organism and a reference assembly of a close relative. This convenience wrapper
+script runs the pipeline steps: mapping, consensus calling and mate-pair
+generation.
 
 #+BEGIN_SRC
 cross-mates REF.fa TARGET-LIB1_1.fq [TARGET-LIB1_2.fq TARGET-LIB2_1.fq ...]
 #+END_SRC
 
 Creates different mate-pair libraries with insert-sizes ranging from 500 bp to
-200,000 kbp. Use them together with TARGET-READS to de-novo assemble your
+200,000 kbp. Use them together with TARGET-READS to /de novo/ assemble your
 organism at hand, or to further scaffold a previously generated assembly.
 
 For power use and tailoring of the pipeline steps to computing infrastructure,
