@@ -7,9 +7,9 @@ newly created read data.
 
 **** Install / Dependencies
 #+BEGIN_SRC
-git clone https://github.com/thackl/cross-scaffolding.git
+git clone https://github.com/thackl/cross-species-scaffolding.git
 
-# install dependencies not on PATH to cross-scaffolding/util/
+# install dependencies not on PATH to cross-species-scaffolding/util/
 cd cross-scaffolding
 make dependencies
 #+END_SRC
@@ -24,12 +24,12 @@ download and install missing software into =cross-scaffolding/util/=
 
 **** Sample
 Run cross-mate on a small sample data set of to different yeast
-strains. Data is downloaded automatically. Requires
+strains. Data is downloaded automatically. Requires in =PATH=:
 
 - curl, gzip
 - sratoolkit (https://github.com/ncbi/sra-tools/wiki/Downloads)
 
-in =PATH=. Running the script takes about 10 minutes on 4 cores
+Running the script takes about 10 minutes on 4 cores
 after the download has finished.
 
 #+BEGIN_SRC
