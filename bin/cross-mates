@@ -29,8 +29,22 @@ EOF
 exit 0; }
 
 SCR=`basename $0`;
-DIR=`dirname $(readlink $0 || echo $0)`;
+# rel dir
+# DIR=`dirname $(readlink $0 || echo $0)`;
+# abs dir
+# # get absolute dir
+pushd . > /dev/null
+DIR="${BASH_SOURCE[0]}"
+while [ -h "$DIR" ]; do
+  cd "$(dirname "$DIR")"
+  DIR="$(readlink "$(basename "$DIR")")"
+done
+cd "$(dirname "$DIR")"
+DIR="$(pwd)/"
+popd > /dev/null
+
 UDIR=$DIR/../util/
+LDIR=$DIR/../lib/
 
 log(){
     echo [$(date +"%T")] $@ >&2
@@ -96,6 +110,8 @@ PATH=$UDIR/bwa:$UDIR/samtools/bin:$UDIR/bcftools:$UDIR/seq-scripts/bin:$UDIR/seq
 for bin in bwa samtools bcftools vcfutils.pl seq-frag interleaved-split; do
     check_bin $bin;
 done;
+
+PERL5LIB=$LDIR/Fastq/lib:$LDIR/Fasta/lib:$PERL5LIB
 
 [ $GZIP -gt 0 ] && check_bin gzip;
 
