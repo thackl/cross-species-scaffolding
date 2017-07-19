@@ -46,9 +46,9 @@ generation.
 cross-mates REF.fa TARGET-LIB1_1.fq [TARGET-LIB1_2.fq TARGET-LIB2_1.fq ...]
 #+END_SRC
 
-Creates different mate-pair libraries with insert-sizes ranging from 500 bp to
-200,000 kbp. Use them together with TARGET-READS to /de novo/ assemble your
-organism at hand, or to further scaffold a previously generated assembly.
+Creates different mate-pair libraries with insert-sizes by default ranging from
+500 bp to 200 kbp. Use them together with TARGET-READS to /de novo/ assemble
+your organism at hand, or to further scaffold a previously generated assembly.
 
 For power use and tailoring of the pipeline steps to computing infrastructure,
 i.e. HPC cluster etc, run the different steps of the procedure
