@@ -23,7 +23,7 @@ install dependencies not present in =PATH= run =make dependencies=. This will
 download and install missing software into =cross-scaffolding/util/=
 
 **** Sample
-Run cross-mate on a small sample data set of to different yeast
+Run cross-mate on a small sample data set of two different yeast
 strains. Data is downloaded automatically. Requires in =PATH=:
 
 - curl, gzip
