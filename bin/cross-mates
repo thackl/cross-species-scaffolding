@@ -16,7 +16,7 @@ Generate in-silico mate-pair (and paired-end) libraries for super-scaffolding
 from target genome reads and a closely related reference.
   -o   output directory [$OUT]
   -t   number of threads / parallel processes [$THREADS]
-  -i   insert sizes [$INSERTS]
+  -i   insert sizes, defaults: [$INSERTS]
   -l   read length [$LENGTH]
   -c   coverage of mate-pair libraries [$COVERAGE]
   -p   paired-end vs. mate-pair insert size threshold [$MPTHRESH]
