@@ -55,6 +55,39 @@ i.e. HPC cluster etc, run the different steps of the procedure
 independently. Have a look at the source code of the cross-mates script for some
 guidance.
 
+**** Pipeline Workflow
+***** 1. Mapping of reads of the target organism to the refernce genome using [[https://github.com/lh3/bwa][bwa mem]]/[[http://www.htslib.org/][Samtools]]:
+#+BEGIN_SRC sh
+# pseudo-code
+bwa mem REF TARGET-READS | samtools view -bS - | samtools sort -o BAM
+#+END_SRC
+
+***** 2. Consensus computation using samtools [[http://www.htslib.org/][Samtools/BCFtools]]:
+#+BEGIN_SRC sh
+# pseudo-code
+samtools mpileup -uf REF BAM | bcftools call -c | vcfutils.pl vcf2fq > CNS
+#+END_SRC
+
+By default, the required minimum coverage for a consensus call is 3. Regions
+with lower coverage will result in N's and low quality values.
+
+***** 3. Generation of /in-silico/ paired-end/mate-pair reads with [[https://github.com/thackl/seq-scripts][seq-frag]]:
+#+BEGIN_SRC sh
+# pseudo-code
+seq-frag pe/mp -[silcp] ... <CNS
+#+END_SRC
+
+cross-mates runs seq-frag with default filtering, i.e. only read pairs with 0
+bases below a phred score of 20 are returned. See =seq-frag --help= for details
+on how to adjust the filtering if necessary.
+
+Other cross-mates defaults for seq-frag:
+- Paired-end vs. Mate-pair threshold: 1000 bp i.e. reads from inserts of sizes >= 1000 will have opposing outward orientation
+- Sampling: systematic, i.e. exact insert sizes and insert fragments sampled at regularly spaced offsets
+- Insert sizes: 500,1000,1500,2000,5000,10000,20000,50000,100000,200000
+- Read length: 100
+- Coverage: 10
+
 **** Contact
 
 Any kind of feedback is highly appreciated. Feel free to either report [[https://github.com/thackl/minidot/issues/new][issues]]
