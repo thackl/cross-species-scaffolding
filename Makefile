@@ -31,12 +31,13 @@ util/bwa:
 
 util/samtools:
 	mkdir -p util
+	if [ -d util/htslib ]; then echo skipping htslib, already downloaded >&2; else cd util && git clone git://github.com/samtools/htslib.git; fi;
 	cd util && git clone git://github.com/samtools/samtools.git
 	cd util/samtools && make
 
 util/bcftools:
 	mkdir -p util
-	cd util && git clone git://github.com/samtools/htslib.git
+	if [ -d util/htslib ]; then echo skipping htslib, already downloaded >&2; else cd util && git clone git://github.com/samtools/htslib.git; fi;
 	cd util && git clone git://github.com/samtools/bcftools.git 
 	cd util/bcftools && make
 

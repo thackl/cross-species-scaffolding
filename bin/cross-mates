@@ -155,7 +155,7 @@ if [ $SOAP -gt 0 ]; then
         [ $i -lt $MPTHRESH ] && MODE=pe || MODE=mp;
         [ $i -lt $MPTHRESH ] && REV=0 || REV=1;
         R1="$OUT"/"$PRE-$MODE-$i""_1""$SUF";
-        R2="$OUT"/"$PRE-$MODE-$i""_1""$SUF";
+        R2="$OUT"/"$PRE-$MODE-$i""_2""$SUF";
 
         echo [LIB]
 	echo avg_ins=$i
