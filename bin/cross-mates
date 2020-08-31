@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+git #!/usr/bin/env bash
 
 # Author: Thomas Hackl - thackl@lim4.de
 # Author: Jose Grau - Jose.Grau@mfn-berlin.de
@@ -111,7 +111,7 @@ for bin in bwa samtools bcftools vcfutils.pl seq-frag interleaved-split; do
     check_bin $bin;
 done;
 
-PERL5LIB=$LDIR/Fastq/lib:$LDIR/Fasta/lib:$PERL5LIB
+export PERL5LIB=$LDIR/Fastq/lib:$LDIR/Fasta/lib:$PERL5LIB
 
 [ $GZIP -gt 0 ] && check_bin gzip;
 
